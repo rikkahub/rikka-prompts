@@ -10,6 +10,13 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@ai-sdk/google": "^1.2.22",
+    "@ai-sdk/openai": "^1.3.23",
     "ai": "^4.3.19"
+  },
+  "scripts": {
+    "test": "bun run index.ts",
+    "cli": "bun run cli.ts",
+    "dev": "bun run --watch index.ts"
   }
 }
