@@ -6,74 +6,13 @@ import { config, validateConfig } from "./config.ts";
 import { getReporter } from "./reporters";
 import type { TestExecutionOptions } from "./types.ts";
 
-interface CliOptions {
-  providers?: string[];
-  parallel?: boolean;
-  timeout?: number;
-  verbose?: boolean;
-  output?: string;
-  format?: "console" | "json" | "html" | "markdown";
-  help?: boolean;
-  suites?: string[];
-}
-
-function parseArgs(args: string[]): CliOptions {
-  const options: CliOptions = {};
+function parseArgs(args: string[]): { help?: boolean } {
+  const options: { help?: boolean } = {};
   
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    const next = args[i + 1];
-    
-    switch (arg) {
-      case "-h":
-      case "--help":
-        options.help = true;
-        break;
-      case "-p":
-      case "--providers":
-        if (next && !next.startsWith("-")) {
-          options.providers = next.split(",");
-          i++;
-        }
-        break;
-      case "--parallel":
-        options.parallel = true;
-        break;
-      case "--no-parallel":
-        options.parallel = false;
-        break;
-      case "-t":
-      case "--timeout":
-        if (next && !next.startsWith("-")) {
-          options.timeout = parseInt(next);
-          i++;
-        }
-        break;
-      case "-v":
-      case "--verbose":
-        options.verbose = true;
-        break;
-      case "-o":
-      case "--output":
-        if (next && !next.startsWith("-")) {
-          options.output = next;
-          i++;
-        }
-        break;
-      case "-f":
-      case "--format":
-        if (next && !next.startsWith("-") && ["console", "json", "html", "markdown"].includes(next)) {
-          options.format = next as "console" | "json" | "html" | "markdown";
-          i++;
-        }
-        break;
-      case "-s":
-      case "--suites":
-        if (next && !next.startsWith("-")) {
-          options.suites = next.split(",");
-          i++;
-        }
-        break;
+  for (const arg of args) {
+    if (arg === "-h" || arg === "--help") {
+      options.help = true;
+      break;
     }
   }
   
@@ -85,28 +24,33 @@ function printHelp() {
 🤖 Rikka Prompts - AI Automation Testing
 
 USAGE:
-  bun run cli.ts [OPTIONS]
+  bun run cli.ts [--help]
+
+Configuration is now managed via YAML files. Create a config.yml file in your project root.
 
 OPTIONS:
   -h, --help                    Show this help message
-  -p, --providers <list>        Comma-separated list of providers (openai,google)
-  -s, --suites <list>          Comma-separated list of test suites to run
-  --parallel                   Run tests in parallel (default)
-  --no-parallel               Run tests sequentially
-  -t, --timeout <ms>           Timeout per test in milliseconds (default: 30000)
-  -v, --verbose                Enable verbose output
-  -o, --output <file>          Save results to file
-  -f, --format <format>        Output format: console, json, html, markdown (default: console)
 
-EXAMPLES:
-  bun run cli.ts                                    # Run all tests
-  bun run cli.ts --providers openai --verbose      # Run only OpenAI tests with verbose output
-  bun run cli.ts --suites "Creative Writing"       # Run only Creative Writing test suite
-  bun run cli.ts --format html --output report.html # Generate HTML report
-  bun run cli.ts --format markdown --output report.md # Generate Markdown report
-  bun run cli.ts --no-parallel --timeout 60000     # Run sequentially with 60s timeout
+CONFIGURATION:
+  All test settings are configured via config.yml (default) in your project root.
+  
+  Example config.yml:
+    providers: [openai, google]
+    suites: ["Creative Writing", "Code Generation"]
+    parallel: true
+    timeout: 30000
+    verbose: false
+    format: console
+    output: report.html
+    
+    openai:
+      apiKey: your_openai_api_key
+      baseURL: https://api.openai.com/v1
+    
+    google:
+      apiKey: your_google_api_key
 
-ENVIRONMENT VARIABLES:
+ENVIRONMENT VARIABLES (fallback):
   OPENAI_API_KEY               OpenAI API key
   GOOGLE_API_KEY               Google AI API key
   DEFAULT_TIMEOUT              Default timeout in milliseconds
@@ -141,23 +85,23 @@ async function main() {
   const engine = new TestEngine();
   
   // Filter test suites if specified
-  const suitesToRun = options.suites 
-    ? testSuites.filter(suite => options.suites!.includes(suite.name))
+  const suitesToRun = config.suites 
+    ? testSuites.filter(suite => config.suites!.includes(suite.name))
     : testSuites;
     
   if (suitesToRun.length === 0) {
     console.error("❌ No matching test suites found.");
-    if (options.suites) {
+    if (config.suites) {
       console.error(`Available suites: ${testSuites.map(s => s.name).join(", ")}`);
     }
     process.exit(1);
   }
   
   const testOptions: TestExecutionOptions = {
-    providers: options.providers as any,
-    parallel: options.parallel ?? config.defaultParallel ?? true,
-    timeout: options.timeout ?? config.defaultTimeout ?? 30000,
-    verbose: options.verbose ?? false,
+    providers: config.providers as any,
+    parallel: config.parallel ?? config.defaultParallel ?? true,
+    timeout: config.timeout ?? config.defaultTimeout ?? 30000,
+    verbose: config.verbose ?? false,
   };
   
   console.log(`Running ${suitesToRun.length} test suite(s):`);
@@ -171,24 +115,19 @@ async function main() {
     const testRun = await engine.runTestSuites(suitesToRun, testOptions);
     
     // Generate report
-    const format = options.format || config.outputFormat || "console";
+    const format = config.format || config.outputFormat || "console";
     const reporter = getReporter(format);
     const report = reporter.generate(testRun);
     
     // Output results
-    if (options.output || config.outputFile) {
-      const outputFile = options.output || config.outputFile!;
+    if (config.output || config.outputFile) {
+      const outputFile = config.output || config.outputFile!;
       await Bun.write(outputFile, report);
       console.log(`📄 Report saved to: ${outputFile}`);
     }
     
-    if (format === "console" || !options.output) {
+    if (format === "console" || !config.output) {
       console.log(report);
-    }
-    
-    // Exit with appropriate code
-    if (testRun.summary.failed > 0) {
-      process.exit(1);
     }
   } catch (error) {
     console.error("❌ Test execution failed:", error);

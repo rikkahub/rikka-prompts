@@ -1,0 +1,67 @@
+# =====================================
+# Rikka Prompts - Default Configuration
+# =====================================
+# This file contains all available configuration options for the AI prompt testing framework.
+# Uncomment and modify the values you want to customize.
+
+# =====================================
+# AI Provider Configuration
+# =====================================
+# Configure your AI providers with API keys and settings
+# Environment variables (OPENAI_API_KEY, GOOGLE_API_KEY) can be used as fallback
+
+openai:
+  # apiKey: sk-your-openai-api-key-here
+  # baseURL: https://api.openai.com/v1  # Optional custom endpoint
+
+google:
+  # apiKey: your-google-ai-api-key-here
+
+# =====================================
+# Test Execution Settings
+# =====================================
+
+# Which AI providers to test against
+# Available providers: openai, google
+# Default: all available providers
+providers:
+  - openai
+  - google
+
+# Specific test suites to run (optional)
+# If not specified, all test suites will be run
+# Available suites depend on your prompts/ directory structure
+# Example suites: ["Creative Writing", "Code Generation", "Logic & Reasoning"]
+# suites:
+#   - "Creative Writing"
+#   - "Code Generation"
+
+# Run tests in parallel for faster execution
+# Default: true
+parallel: true
+
+# Timeout per individual test in milliseconds
+# Default: 30000 (30 seconds)
+timeout: 30000
+
+# Enable detailed output during test execution
+# Shows request/response details and intermediate steps
+# Default: false
+verbose: false
+
+# =====================================
+# Output & Reporting Configuration
+# =====================================
+
+# Output format for test results
+# Available formats: console, json, html, markdown
+# Default: console
+format: markdown
+
+# Save results to a file (optional)
+# The file extension should match the format
+# Examples:
+#   - report.html (for html format)
+#   - report.json (for json format)  
+#   - report.md (for markdown format)
+output: report.md

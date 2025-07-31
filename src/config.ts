@@ -6,11 +6,22 @@ export interface Config {
   google?: {
     apiKey?: string;
   };
+  providers?: string[];
+  suites?: string[];
+  parallel?: boolean;
+  timeout?: number;
+  verbose?: boolean;
+  format?: "console" | "json" | "html" | "markdown";
+  output?: string;
   defaultTimeout?: number;
   defaultParallel?: boolean;
-  outputFormat?: "console" | "json" | "html";
+  outputFormat?: "console" | "json" | "html" | "markdown";
   outputFile?: string;
 }
+
+import * as YAML from 'yaml';
+import { existsSync, readFileSync } from 'fs';
+import { join } from 'path';
 
 function getEnvVar(key: string): string | undefined {
   if (typeof process !== "undefined" && process.env) {
@@ -22,18 +33,43 @@ function getEnvVar(key: string): string | undefined {
   return undefined;
 }
 
+function loadYamlConfig(configPath: string = 'config.yml'): Partial<Config> {
+  const fullPath = join(process.cwd(), configPath);
+  
+  if (!existsSync(fullPath)) {
+    return {};
+  }
+  
+  try {
+    const yamlContent = readFileSync(fullPath, 'utf8');
+    return YAML.parse(yamlContent) || {};
+  } catch (error) {
+    console.warn(`Warning: Failed to parse YAML config file ${configPath}:`, error);
+    return {};
+  }
+}
+
+const yamlConfig = loadYamlConfig();
+
 export const config: Config = {
   openai: {
-    apiKey: getEnvVar("OPENAI_API_KEY"),
-    baseURL: getEnvVar("OPENAI_BASE_URL"),
+    apiKey: yamlConfig.openai?.apiKey || getEnvVar("OPENAI_API_KEY"),
+    baseURL: yamlConfig.openai?.baseURL || getEnvVar("OPENAI_BASE_URL"),
   },
   google: {
-    apiKey: getEnvVar("GOOGLE_API_KEY"),
+    apiKey: yamlConfig.google?.apiKey || getEnvVar("GOOGLE_API_KEY"),
   },
-  defaultTimeout: parseInt(getEnvVar("DEFAULT_TIMEOUT") || "30000"),
-  defaultParallel: getEnvVar("DEFAULT_PARALLEL") === "true",
-  outputFormat: (getEnvVar("OUTPUT_FORMAT") as Config["outputFormat"]) || "console",
-  outputFile: getEnvVar("OUTPUT_FILE"),
+  providers: yamlConfig.providers,
+  suites: yamlConfig.suites,
+  parallel: yamlConfig.parallel,
+  timeout: yamlConfig.timeout,
+  verbose: yamlConfig.verbose,
+  format: yamlConfig.format,
+  output: yamlConfig.output,
+  defaultTimeout: yamlConfig.timeout || parseInt(getEnvVar("DEFAULT_TIMEOUT") || "30000"),
+  defaultParallel: yamlConfig.parallel ?? (getEnvVar("DEFAULT_PARALLEL") === "true"),
+  outputFormat: yamlConfig.format || (getEnvVar("OUTPUT_FORMAT") as Config["outputFormat"]) || "console",
+  outputFile: yamlConfig.output || getEnvVar("OUTPUT_FILE"),
 };
 
 export function validateConfig(): { valid: boolean; errors: string[] } {
