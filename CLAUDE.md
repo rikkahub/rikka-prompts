@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-- **Run tests**: `bun run index.ts` - Execute all test suites
-- **CLI interface**: `bun run cli.ts` - Run with command-line options
-- **Development mode**: `bun run --watch index.ts` - Run with file watching
+- **Run tests**: `bun run src/index.ts` - Execute all test suites
+- **CLI interface**: `bun run src/cli.ts` - Run with command-line options
+- **Development mode**: `bun run --watch src/index.ts` - Run with file watching
 
 ### CLI Options
 - `--providers openai,google` - Select specific AI providers
@@ -23,10 +23,10 @@ This is an AI prompt testing framework built with Bun and TypeScript. The system
 
 ### Core Components
 
-- **TestEngine** (`test-engine.ts`): Main orchestrator that executes prompts against AI models and runs assertions
-- **Providers** (`providers.ts`): AI model configuration and instantiation for OpenAI and Google
-- **Assertions** (`assertions/`): Validation logic including basic checks and AI-based evaluations
-- **Test Suites** (`prompts/`): Organized collections of prompts for different domains (creative writing, code generation)
+- **TestEngine** (`src/test-engine.ts`): Main orchestrator that executes prompts against AI models and runs assertions
+- **Providers** (`src/providers.ts`): AI model configuration and instantiation for OpenAI and Google
+- **Assertions** (`src/assertions/`): Validation logic including basic checks and AI-based evaluations
+- **Test Suites** (`src/prompts/`): Organized collections of prompts for different domains (creative writing, code generation)
 
 ### Data Flow
 
@@ -52,7 +52,7 @@ GOOGLE_API_KEY=your_google_api_key
 
 ## Test Development
 
-New prompts should be added to existing suites in `prompts/` directory. Each prompt requires:
+New prompts should be added to existing suites in `src/prompts/` directory. Each prompt requires:
 - Unique ID and descriptive name
 - The prompt text
 - Array of assertion functions to validate responses
