@@ -1,95 +1,10 @@
-import type { TestRun, TestResult } from "./types.ts";
+import type { TestRun, TestResult } from "../types.ts";
+import { BaseReporter } from "./base.ts";
 
-export interface Reporter {
-  generate(testRun: TestRun): string;
-  getFileExtension(): string;
-}
-
-export class ConsoleReporter implements Reporter {
+export class HtmlReporter extends BaseReporter {
   generate(testRun: TestRun): string {
     const { summary, results } = testRun;
-    const passRate = (summary.passed / summary.total * 100).toFixed(1);
-    
-    let report = `
-🤖 Test Run Report
-==================
-Run ID: ${testRun.id}
-Duration: ${(summary.duration / 1000).toFixed(2)}s
-Total Tests: ${summary.total}
-✅ Passed: ${summary.passed} (${passRate}%)
-❌ Failed: ${summary.failed}
-Providers: ${testRun.config.providers.join(", ")}
-Parallel: ${testRun.config.parallel ? "Yes" : "No"}
-
-`;
-
-    const passedByProvider = this.groupResultsByProvider(results.filter(r => r.passed));
-    const failedByProvider = this.groupResultsByProvider(results.filter(r => !r.passed));
-
-    if (Object.keys(passedByProvider).length > 0) {
-      report += "✅ Passed Tests by Provider:\n";
-      report += "============================\n";
-      for (const [provider, providerResults] of Object.entries(passedByProvider)) {
-        report += `\n📊 ${provider}: ${providerResults.length} tests\n`;
-        for (const result of providerResults) {
-          report += `   ✓ ${result.promptName} (${result.model}) - ${result.responseTime}ms\n`;
-        }
-      }
-      report += "\n";
-    }
-
-    if (Object.keys(failedByProvider).length > 0) {
-      report += "❌ Failed Tests by Provider:\n";
-      report += "============================\n";
-      for (const [provider, providerResults] of Object.entries(failedByProvider)) {
-        report += `\n📊 ${provider}: ${providerResults.length} tests\n`;
-        for (const result of providerResults) {
-          report += `   ❌ ${result.promptName} (${result.model})\n`;
-          if (result.error) {
-            report += `      Error: ${result.error}\n`;
-          } else {
-            result.assertions
-              .filter(a => !a.passed)
-              .forEach(assertion => {
-                report += `      • ${assertion.message}\n`;
-              });
-          }
-        }
-      }
-    }
-
-    return report;
-  }
-
-  getFileExtension(): string {
-    return "txt";
-  }
-
-  private groupResultsByProvider(results: TestResult[]): Record<string, TestResult[]> {
-    return results.reduce((acc, result) => {
-      if (!acc[result.provider]) {
-        acc[result.provider] = [];
-      }
-      acc[result.provider].push(result);
-      return acc;
-    }, {} as Record<string, TestResult[]>);
-  }
-}
-
-export class JsonReporter implements Reporter {
-  generate(testRun: TestRun): string {
-    return JSON.stringify(testRun, null, 2);
-  }
-
-  getFileExtension(): string {
-    return "json";
-  }
-}
-
-export class HtmlReporter implements Reporter {
-  generate(testRun: TestRun): string {
-    const { summary, results } = testRun;
-    const passRate = (summary.passed / summary.total * 100).toFixed(1);
+    const passRate = this.calculatePassRate(summary.passed, summary.total);
     
     const passedResults = results.filter(r => r.passed);
     const failedResults = results.filter(r => !r.passed);
@@ -147,7 +62,7 @@ export class HtmlReporter implements Reporter {
                 <div class="stat-label">Failed</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value">${(summary.duration / 1000).toFixed(2)}s</div>
+                <div class="stat-value">${this.formatDuration(summary.duration)}s</div>
                 <div class="stat-label">Duration</div>
             </div>
         </div>
@@ -197,27 +112,5 @@ export class HtmlReporter implements Reporter {
     
     html += `</div>`;
     return html;
-  }
-
-  private groupResultsByProvider(results: TestResult[]): Record<string, TestResult[]> {
-    return results.reduce((acc, result) => {
-      if (!acc[result.provider]) {
-        acc[result.provider] = [];
-      }
-      acc[result.provider].push(result);
-      return acc;
-    }, {} as Record<string, TestResult[]>);
-  }
-}
-
-export function getReporter(format: "console" | "json" | "html"): Reporter {
-  switch (format) {
-    case "json":
-      return new JsonReporter();
-    case "html":
-      return new HtmlReporter();
-    case "console":
-    default:
-      return new ConsoleReporter();
   }
 }

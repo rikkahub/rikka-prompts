@@ -1,5 +1,6 @@
 import { TestEngine } from "./test-engine.ts";
 import { testSuites } from "./prompts/index.ts";
+import { getReporter } from "./reporters/index.ts";
 import type { TestExecutionOptions } from "./types.ts";
 
 async function main() {
@@ -20,7 +21,10 @@ async function main() {
     const testRun = await engine.runTestSuites(testSuites, options);
     
     console.log("\n" + "=".repeat(50));
-    console.log(engine.generateReport(testRun));
+    
+    const reporter = getReporter("console");
+    const report = reporter.generate(testRun);
+    console.log(report);
     
     if (testRun.summary.failed > 0) {
       process.exit(1);

@@ -194,43 +194,6 @@ export class TestEngine {
     };
   }
 
-  generateReport(testRun: TestRun): string {
-    const { summary, results } = testRun;
-    const passRate = (summary.passed / summary.total * 100).toFixed(1);
-    
-    let report = `
-Test Run Report
-================
-Run ID: ${testRun.id}
-Duration: ${summary.duration}ms
-Total Tests: ${summary.total}
-Passed: ${summary.passed} (${passRate}%)
-Failed: ${summary.failed}
-
-`;
-
-    if (summary.failed > 0) {
-      report += "Failed Tests:\n";
-      report += "=============\n";
-      
-      results
-        .filter(r => !r.passed)
-        .forEach(result => {
-          report += `\n❌ ${result.promptName} - ${result.provider}/${result.model}\n`;
-          if (result.error) {
-            report += `   Error: ${result.error}\n`;
-          } else {
-            result.assertions
-              .filter(a => !a.passed)
-              .forEach(assertion => {
-                report += `   • ${assertion.message}\n`;
-              });
-          }
-        });
-    }
-
-    return report;
-  }
 }
 
 // Import providers for the test engine

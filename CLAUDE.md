@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `--parallel/--no-parallel` - Control parallel execution
 - `--timeout 60000` - Set timeout in milliseconds
 - `--verbose` - Enable detailed output
-- `--format json/html` - Output format
+- `--format json/html/markdown` - Output format
 - `--output report.html` - Save results to file
 
 ## Architecture

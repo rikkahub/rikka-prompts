@@ -3,7 +3,7 @@
 import { TestEngine } from "./test-engine.ts";
 import { testSuites } from "./prompts/index.ts";
 import { config, validateConfig } from "./config.ts";
-import { getReporter } from "./reporters.ts";
+import { getReporter } from "./reporters";
 import type { TestExecutionOptions } from "./types.ts";
 
 interface CliOptions {
@@ -12,7 +12,7 @@ interface CliOptions {
   timeout?: number;
   verbose?: boolean;
   output?: string;
-  format?: "console" | "json" | "html";
+  format?: "console" | "json" | "html" | "markdown";
   help?: boolean;
   suites?: string[];
 }
@@ -62,8 +62,8 @@ function parseArgs(args: string[]): CliOptions {
         break;
       case "-f":
       case "--format":
-        if (next && !next.startsWith("-") && ["console", "json", "html"].includes(next)) {
-          options.format = next as "console" | "json" | "html";
+        if (next && !next.startsWith("-") && ["console", "json", "html", "markdown"].includes(next)) {
+          options.format = next as "console" | "json" | "html" | "markdown";
           i++;
         }
         break;
@@ -96,13 +96,14 @@ OPTIONS:
   -t, --timeout <ms>           Timeout per test in milliseconds (default: 30000)
   -v, --verbose                Enable verbose output
   -o, --output <file>          Save results to file
-  -f, --format <format>        Output format: console, json, html (default: console)
+  -f, --format <format>        Output format: console, json, html, markdown (default: console)
 
 EXAMPLES:
   bun run cli.ts                                    # Run all tests
   bun run cli.ts --providers openai --verbose      # Run only OpenAI tests with verbose output
   bun run cli.ts --suites "Creative Writing"       # Run only Creative Writing test suite
   bun run cli.ts --format html --output report.html # Generate HTML report
+  bun run cli.ts --format markdown --output report.md # Generate Markdown report
   bun run cli.ts --no-parallel --timeout 60000     # Run sequentially with 60s timeout
 
 ENVIRONMENT VARIABLES:
@@ -110,7 +111,7 @@ ENVIRONMENT VARIABLES:
   GOOGLE_API_KEY               Google AI API key
   DEFAULT_TIMEOUT              Default timeout in milliseconds
   DEFAULT_PARALLEL             Run tests in parallel by default (true/false)
-  OUTPUT_FORMAT                Default output format (console, json, html)
+  OUTPUT_FORMAT                Default output format (console, json, html, markdown)
   OUTPUT_FILE                  Default output file path
 `);
 }
